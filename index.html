@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life Insurance Pricing & Reserve Engine</title>
+<style>
+:root{
+  --navy:#0B2F52;
+  --navy2:#123F68;
+  --blue:#1F66A5;
+  --blue2:#3B82C4;
+  --sky:#EAF3FA;
+  --ice:#F4F8FB;
+  --paper:#F7F9FC;
+  --white:#FFFFFF;
+  --ink:#18324A;
+  --muted:#64788A;
+  --muted2:#8A9AAA;
+  --line:#D8E2EA;
+  --line2:#C3D2DE;
+  --green:#16836B;
+  --green-soft:#E7F5F1;
+  --gold:#A87416;
+  --gold-soft:#FBF3DF;
+  --red:#B64A4A;
+  --red-soft:#FBECEC;
+  --shadow:0 10px 28px rgba(22,55,83,.08);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,Segoe UI,Arial,sans-serif;min-height:100vh}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(31,102,165,.025) 1px,transparent 1px),linear-gradient(rgba(31,102,165,.025) 1px,transparent 1px);background-size:42px 42px}
+.header{position:sticky;top:0;z-index:30;min-height:82px;background:rgba(255,255,255,.97);border-bottom:1px solid var(--line);padding:0 30px;display:flex;align-items:center;gap:28px;box-shadow:0 4px 18px rgba(20,50,80,.07)}
+.header:after{content:"";position:absolute;left:0;bottom:-1px;width:250px;height:3px;background:var(--blue)}
+.header-brand{display:flex;align-items:center;gap:12px;min-width:335px}.brand-mark{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;background:var(--navy);color:#fff;font-size:18px;box-shadow:0 5px 12px rgba(11,47,82,.2)}
+.header h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:-.35px;font-weight:600;line-height:1.05;color:var(--navy)}.header p{margin:5px 0 0;color:var(--muted);font-size:10px;letter-spacing:.3px}
+.header-center{display:flex;gap:24px;color:#52697B;font-size:10px;font-weight:700;letter-spacing:.35px}.header-center span{position:relative}.header-center span:not(:last-child):after{content:"";position:absolute;right:-13px;top:1px;width:1px;height:12px;background:var(--line2)}
+.author{margin-left:auto;display:flex;align-items:center;gap:10px;text-align:right;color:var(--navy);font-size:10px;font-weight:750;line-height:1.35}.author small{display:block;color:var(--muted);font-size:8px;font-weight:500}.author-badge{width:35px;height:35px;border-radius:50%;display:grid;place-items:center;background:var(--sky);border:1px solid #C9DCEB;color:var(--navy);font-size:13px;font-weight:800}
+.shell{max-width:1700px;margin:0 auto;padding:0;display:grid;grid-template-columns:235px minmax(0,1fr);min-height:calc(100vh - 82px)}
+.nav{position:sticky;top:82px;height:calc(100vh - 82px);padding:24px 12px 18px;background:var(--navy);display:flex;flex-direction:column;gap:5px;overflow-y:auto;box-shadow:7px 0 22px rgba(11,47,82,.08)}
+.nav-label{font-size:8px;letter-spacing:1.8px;color:#91ABC0;font-weight:800;padding:3px 13px 12px}.nav button{width:100%;border:1px solid transparent;background:transparent;color:#B7CAD9;padding:11px 12px;border-radius:9px;font-size:11px;font-weight:650;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px;transition:.18s ease}.nav-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:rgba(255,255,255,.065);color:#BFD1DE;font-size:12px;flex:0 0 28px}.nav button:hover{background:rgba(255,255,255,.075);color:#fff;transform:translateX(2px)}.nav button:hover .nav-icon{background:rgba(255,255,255,.12);color:#fff}.nav button.active{color:#fff;background:linear-gradient(90deg,rgba(72,151,218,.28),rgba(72,151,218,.08));border-color:rgba(126,188,233,.3);box-shadow:inset 3px 0 0 #66B1EA}.nav button.active .nav-icon{background:#1F66A5;color:#fff}.nav-footer{margin-top:auto;border-top:1px solid rgba(255,255,255,.11);padding:16px 12px 4px;color:#89A5BA;font-size:7px;letter-spacing:1.3px}.nav-footer b{display:block;color:#D5E2EC;font-size:9px;letter-spacing:0;margin-top:5px;font-weight:600}
+.page{min-width:0;min-height:calc(100vh - 82px);padding:32px 36px 28px;background:linear-gradient(180deg,#F8FAFC,#F4F7FA)}.view{display:none;animation:fadeIn .2s ease}.view.active{display:block}@keyframes fadeIn{from{opacity:.25;transform:translateY(3px)}to{opacity:1;transform:none}}
+.kicker{font-size:9px;letter-spacing:1.7px;text-transform:uppercase;color:var(--blue);font-weight:850;margin-bottom:7px}h2{font-family:Georgia,'Times New Roman',serif;font-size:30px;letter-spacing:-.5px;margin:0 0 7px;color:var(--navy);font-weight:600}h3{font-size:10px;text-transform:uppercase;letter-spacing:1px;margin:0 0 10px;color:#476276;font-weight:850}.intro{color:var(--muted);font-size:12px;line-height:1.65;margin:0 0 20px}
+.note{padding:13px 16px;border:1px solid #D4E5F1;border-left:3px solid var(--blue);background:var(--sky);border-radius:8px;margin:15px 0 20px;font-size:11px;line-height:1.5;color:#506A7D}.note b{color:var(--navy)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.setup{background:#fff;border:1px solid var(--line);border-radius:11px;padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}.setup.green{border-top:3px solid var(--blue)}.setup.ochre{border-top:3px solid var(--gold)}.setup.rust{border-top:3px solid var(--red)}
+.field{margin-bottom:18px}.field:last-child{margin-bottom:3px}label{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;margin-bottom:8px;color:#365269}.val{background:var(--sky);border:1px solid #CFE0EC;color:var(--blue);border-radius:5px;padding:3px 8px;font-size:9px;font-weight:800}
+input[type=range]{width:100%;height:5px;accent-color:var(--blue);cursor:pointer;appearance:auto}input[type=range]::-webkit-slider-runnable-track{height:4px;background:#D6E1E9;border-radius:10px}input[type=range]::-webkit-slider-thumb{margin-top:-5px}
+input[type=number],select{width:100%;height:38px;border:1px solid var(--line2);border-radius:7px;background:#fff;padding:7px 10px;color:var(--ink);font-size:11px;outline:none;transition:.18s ease}input[type=number]:focus,select:focus{border-color:#6EA9D4;box-shadow:0 0 0 3px rgba(31,102,165,.08)}select option{background:#fff;color:var(--ink)}.help{font-size:10px;color:var(--muted2);line-height:1.5}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:20px 0}.metric{position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:10px;padding:15px;box-shadow:var(--shadow);transition:.18s ease}.metric:hover{transform:translateY(-2px);box-shadow:0 14px 28px rgba(22,55,83,.12);border-color:#B8CDDC}.metric:before{content:"";position:absolute;left:0;top:0;width:100%;height:3px;background:var(--blue)}.metric.blue:before{background:#3B82C4}.metric.ochre:before{background:var(--gold)}.metric.slate:before{background:#5B7690}.metric.rust:before{background:var(--red)}.metric.gold:before{background:var(--gold)}.metric.red:before{background:var(--red)}.metric small{display:block;color:#74899A;font-size:8px;text-transform:uppercase;letter-spacing:1px;font-weight:850}.metric strong{display:block;font-size:20px;margin-top:8px;letter-spacing:-.3px;color:var(--navy)}
+.decision{display:grid;grid-template-columns:50px minmax(0,1fr) 125px;gap:14px;align-items:center;background:linear-gradient(100deg,#EAF4FB,#F8FBFD);border:1px solid #BFD7E7;border-left:4px solid var(--blue);border-radius:11px;padding:15px 17px;margin:20px 0;box-shadow:var(--shadow);min-width:0}.decision-icon{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;background:#E0EFF9;border:1px solid #BBD7E9;color:var(--blue);font-size:18px;font-weight:800}.decision-copy{min-width:0}.decision .tag{font-size:8px;color:#5B7B93;text-transform:uppercase;letter-spacing:1.5px;font-weight:850;margin-bottom:4px}.decision strong{display:block;font-size:14px;color:var(--navy);white-space:normal;overflow-wrap:anywhere}.decision span{display:block;color:#667D8F;font-size:10px;margin-top:5px;line-height:1.5}.decision-result{justify-self:end;text-align:right}.decision-result small{display:block;color:#6B8294;font-size:8px;text-transform:uppercase;letter-spacing:1px;font-weight:800;margin-bottom:5px}.signal{justify-self:end;align-self:center;display:inline-flex;align-items:center;justify-content:center;min-width:88px;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:8px;font-weight:850;letter-spacing:.7px;padding:7px 10px;border-radius:999px;background:#EDF3F7;border:1px solid #CAD8E2;color:#526C7E}.signal.good{background:var(--green-soft);border-color:#B8DDD4;color:var(--green)}.signal.watch{background:var(--gold-soft);border-color:#E8D39C;color:var(--gold)}.signal.high{background:var(--red-soft);border-color:#E8BABA;color:var(--red)}
+.card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:17px;margin-bottom:16px;box-shadow:var(--shadow)}.card.soft{background:#F8FBFD}.chart-card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:15px;margin-bottom:16px;height:365px;box-shadow:var(--shadow)}.chart-card.tall{height:430px}.svg-chart{width:100%;height:315px;overflow:hidden}.chart-card.tall .svg-chart{height:380px}.chart-card svg{width:100%;height:315px;display:block}.chart-card.tall svg{height:380px}.two-charts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.subsection{border-top:1px solid var(--line);padding-top:22px;margin-top:24px}.subsection:first-of-type{border-top:0;padding-top:0;margin-top:4px}.subsection-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:15px}.subsection-head h3{font-size:12px;margin:1px 0 4px;color:var(--navy)}.subsection-head p{margin:0;color:var(--muted);font-size:10px;line-height:1.5}.section-number{width:27px;height:27px;border-radius:7px;display:grid;place-items:center;background:var(--navy);color:#fff;font-size:9px;font-weight:800;flex:0 0 27px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:10px;overflow:hidden;border:1px solid var(--line);border-radius:8px}th{background:var(--navy);color:#fff;text-align:left;padding:10px;border-bottom:1px solid #2A5275;font-size:9px;text-transform:uppercase;letter-spacing:.6px}td{padding:9px 10px;border-bottom:1px solid #E5ECF1;color:#4B6477}tr:last-child td{border-bottom:0}tr:nth-child(even) td{background:#F7FAFC}tr:hover td{background:#EDF5FA}.badge{display:inline-block;background:var(--sky);border:1px solid #D0E0EB;color:#35627F;padding:5px 8px;border-radius:999px;font-size:9px;font-weight:750;margin:2px}.formula{font-family:Georgia,serif;background:#F3F7FA;border:1px solid #D8E4EC;border-left:3px solid var(--blue);border-radius:7px;padding:13px;font-size:14px;color:var(--navy);margin:14px 0}.footer{grid-column:1 / -1;text-align:left;color:#7D91A1;font-size:9px;padding:15px 28px;border-top:1px solid var(--line);background:#fff;margin-top:0}button{font-family:inherit}
+@media(max-width:1100px){.header-center{display:none}.header-brand{min-width:0}.shell{grid-template-columns:205px 1fr}.page{padding:26px 22px}.metrics,.grid3{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.header{min-height:68px;padding:11px 15px}.header-brand{gap:8px}.header h1{font-size:18px}.header p{font-size:8px}.author{font-size:8px}.author small{font-size:7px}.author-badge{display:none}.shell{display:block}.nav{position:sticky;top:68px;z-index:20;height:auto;flex-direction:row;overflow-x:auto;padding:8px 10px;border-right:0;border-bottom:1px solid #173F61;background:var(--navy)}.nav-label,.nav-footer{display:none}.nav button{width:auto;white-space:nowrap;flex:0 0 auto;padding:8px 10px}.nav button .nav-icon{display:none}.nav button.active{box-shadow:inset 0 -2px 0 #7CC0EC}.page{padding:20px 14px}.metrics,.grid3,.grid2,.two-charts{grid-template-columns:1fr}.decision{grid-template-columns:44px minmax(0,1fr);padding:14px}.decision-result{grid-column:2;justify-self:start;text-align:left;margin-top:4px}.decision-result .signal{justify-self:start}.decision .signal{grid-column:auto;justify-self:start;margin-top:0}.chart-card{height:345px}.svg-chart,.chart-card svg{height:295px}.chart-card.tall{height:365px}.chart-card.tall .svg-chart,.chart-card.tall svg{height:335px}.footer{padding:13px 15px}h2{font-size:25px}}
+@media(max-width:440px){.header p{display:none}.header{min-height:60px}.nav{top:60px}.metric strong{font-size:18px}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-brand">
+    <div class="brand-mark">✦</div>
+    <div>
+      <h1>Life Insurance Pricing &amp; Reserve Engine</h1>
+      <p>Interactive Actuarial Model · Pricing · Reserving · Risk Analysis</p>
+    </div>
+  </div>
+  <div class="header-center">
+    <span>Valuation</span><span>Pricing</span><span>Reserving</span><span>Stress Analysis</span>
+  </div>
+  <div class="author">
+    <div>Avantika Vashisht<small>Actuarial Portfolio</small></div>
+    <div class="author-badge">AV</div>
+  </div>
+</header>
+
+<main class="shell">
+<nav class="nav">
+ <div class="nav-label">MODEL NAVIGATION</div>
+ <button class="active" data-view="home"><span class="nav-icon">⚙</span><span>Policy Setup</span></button>
+ <button data-view="overview"><span class="nav-icon">⌂</span><span>Overview</span></button>
+ <button data-view="mortality"><span class="nav-icon">♧</span><span>Mortality &amp; Survival</span></button>
+ <button data-view="valuation"><span class="nav-icon">◈</span><span>Valuation &amp; Pricing</span></button>
+ <button data-view="reserves"><span class="nav-icon">▣</span><span>Reserves &amp; Progression</span></button>
+ <button data-view="analysis"><span class="nav-icon">▤</span><span>Comparison &amp; Stress</span></button>
+ <button data-view="method"><span class="nav-icon">i</span><span>Methodology</span></button>
+ <div class="nav-footer"><span>ACTUARIAL MODEL</span><b>Pricing • Valuation • Risk</b></div>
+</nav>
+<section class="page">
+<div class="view active" id="home">
+ <div class="kicker">00 · Model controls</div>
+ <h2>Home / Policy Setup</h2>
+ <p class="intro">Build the policy here. Once the assumptions are set, move through the analytical pages to see how they affect benefit values, premiums, reserves and stress outcomes.</p>
+ <div class="note"><b>Workflow:</b> set assumptions → inspect valuation → price → reserve → stress-test. The model updates as you change the controls.</div>
+
+ <div class="grid2">
+  <div class="setup green">
+   <h3>Policy Design</h3>
+   <div class="field"><label>Age at entry <span class="val" id="ageV"></span></label><input id="age" type="range" min="18" max="85" value="35"></div>
+   <div class="field"><label>Policy term (years) <span class="val" id="termV"></span></label><input id="term" type="range" min="1" max="60" value="20"></div>
+   <div class="field"><label>Sum assured <span class="val" id="saV"></span></label><input id="sa" type="range" min="100000" max="2000000" step="50000" value="500000"></div>
+   <div class="field"><label>Premium frequency</label><select id="freq"><option value="1">Annual</option><option value="2">Half-yearly</option><option value="4">Quarterly</option><option value="12">Monthly</option></select></div>
+  </div>
+
+  <div class="setup ochre">
+   <h3>Economic &amp; Mortality</h3>
+   <div class="field"><label>Interest rate, annual effective <span class="val" id="intV"></span></label><input id="interest" type="range" min=".01" max=".10" step=".0025" value=".04"></div>
+   <div class="field"><label>Mortality multiplier <span class="val" id="mortV"></span></label><input id="mort" type="range" min=".50" max="2" step=".05" value="1"></div>
+   <p class="help">Makeham mortality basis. 1.00 represents the base mortality assumption; higher values increase qx.</p>
+  </div>
+ </div>
+
+ <div class="grid2">
+  <div class="setup" style="border-top:4px solid #88729B">
+   <h3>Gross Premium Expenses</h3>
+   <div class="grid2">
+    <div class="field"><label>Initial expense (fixed)</label><input id="initFixed" type="number" value="200" step="10"></div>
+    <div class="field"><label>Initial expense (% SA)</label><input id="initPct" type="number" value=".005" step=".001"></div>
+    <div class="field"><label>Renewal expense (fixed/year)</label><input id="renewFixed" type="number" value="30" step="5"></div>
+    <div class="field"><label>Renewal expense (% premium)</label><input id="renewPct" type="number" value=".02" step=".005"></div>
+    <div class="field"><label>Year-1 commission (% premium)</label><input id="comm1" type="number" value=".25" step=".01"></div>
+    <div class="field"><label>Renewal commission (% premium)</label><input id="commRenew" type="number" value=".025" step=".005"></div>
+    <div class="field"><label>Profit / risk loading</label><input id="profit" type="number" value=".05" step=".01"></div>
+   </div>
+  </div>
+  <div class="setup rust">
+   <h3>Reserve View</h3>
+   <div class="field"><label>Policy year, t <span class="val" id="tV"></span></label><input id="reserveT" type="range" min="0" max="20" value="10"></div>
+   <p class="help">Choose the policy duration at which the reserve is inspected. The maximum automatically follows the selected policy term.</p>
+   <div class="note" style="margin-top:14px;margin-bottom:0"><b>Decision focus:</b> pricing margin + stressed reserve movement.</div>
+  </div>
+ </div>
+</div>
+
+<div class="view" id="overview">
+ <div class="kicker">01 · Decision dashboard</div>
+ <h2>What does this policy look like?</h2>
+ <p class="intro">The Overview turns the detailed calculations into a quick actuarial judgement.</p>
+ <div class="metrics">
+  <div class="metric"><small>Endowment net premium</small><strong id="ovNet">—</strong></div>
+  <div class="metric ochre"><small>Endowment gross premium</small><strong id="ovGross">—</strong></div>
+  <div class="metric slate"><small>Gross loading</small><strong id="ovLoad">—</strong></div>
+  <div class="metric rust"><small>Reserve at t</small><strong id="ovRes">—</strong></div>
+ </div>
+ <div class="decision decision-main">
+  <div class="decision-icon" aria-hidden="true">✓</div>
+  <div class="decision-copy">
+   <div class="tag">Model interpretation</div>
+   <strong id="decision">—</strong>
+   <span id="decisionDetail">—</span>
+  </div>
+  <div class="decision-result"><small>Assessment</small><div class="signal" id="decisionSignal">—</div></div>
+ </div>
+ <div class="grid2">
+  <div class="card soft"><h3>How to read this</h3><p id="whyDecision" class="intro" style="margin:0">—</p></div>
+  <div class="card soft"><h3>Policy snapshot</h3><div id="snapshot">—</div></div>
+ </div>
+ <div class="two-charts">
+  <div class="chart-card"><div id="overviewPremiumChart" class="svg-chart"></div></div>
+  <div class="chart-card"><div id="overviewReserveChart" class="svg-chart"></div></div>
+ </div>
+</div>
+
+<div class="view" id="mortality">
+ <div class="kicker">02 · Mortality basis</div>
+ <h2>Mortality &amp; Survival</h2>
+ <p class="intro">See the mortality curve and the probability of surviving through the selected policy term.</p>
+ <div class="formula">qₓ = 1 − exp[−(A + B·Cˣ)]</div>
+ <div class="two-charts">
+  <div class="chart-card"><div id="mortChart" class="svg-chart"></div></div>
+  <div class="chart-card"><div id="survChart" class="svg-chart"></div></div>
+ </div>
+ <div class="card"><h3>Life-table extract</h3><div id="lifeTable"></div></div>
+</div>
+
+<div class="view" id="valuation">
+ <div class="kicker">03 · Valuation &amp; pricing</div>
+ <h2>Valuation &amp; Pricing</h2>
+ <p class="intro">Move from expected present values to premium determination in one workflow, using the same policy and economic assumptions.</p>
+ <div class="subsection">
+  <div class="subsection-head"><span class="section-number">01</span><div><h3>Expected Present Value of Benefits</h3><p>Future benefits are weighted by their probabilities and discounted to the valuation date.</p></div></div>
+  <div class="formula">Term assurance + Pure endowment = Endowment assurance</div>
+  <div class="chart-card"><div id="epvChart" class="svg-chart"></div></div>
+  <div class="card"><h3>EPV comparison</h3><div id="epvTable"></div></div>
+ </div>
+ <div class="subsection">
+  <div class="subsection-head"><span class="section-number">02</span><div><h3>Premium Engine</h3><p>Compare net premiums with gross premiums after expenses, commissions and profit/risk loading.</p></div></div>
+  <div class="metrics">
+   <div class="metric"><small>Term net annual</small><strong id="prTerm">—</strong></div>
+   <div class="metric blue"><small>Whole life net annual</small><strong id="prWhole">—</strong></div>
+   <div class="metric gold"><small>Endowment net annual</small><strong id="prEnd">—</strong></div>
+   <div class="metric red"><small>Endowment gross</small><strong id="prGross">—</strong></div>
+  </div>
+  <div class="decision">
+  <div class="decision-icon" aria-hidden="true">₹</div>
+  <div class="decision-copy"><div class="tag">Pricing decision</div><strong id="pricingDecision">—</strong><span id="pricingDetail">—</span></div>
+  <div class="signal" id="pricingSignal">—</div>
+  </div>
+  <div class="chart-card"><div id="premiumChart" class="svg-chart"></div></div>
+  <div class="card"><h3>Premium table</h3><div id="premiumTable"></div></div>
+ </div>
+</div>
+
+<div class="view" id="reserves">
+ <div class="kicker">04 · Reserving</div>
+ <h2>Reserves &amp; Progression</h2>
+ <p class="intro">Inspect the reserve at a selected duration, cross-check the valuation, and see how the reserve develops across the policy term.</p>
+ <div class="subsection">
+  <div class="subsection-head"><span class="section-number">01</span><div><h3>Reserve Analysis</h3><p>Inspect the reserve at the selected policy duration and understand what has accumulated inside the contract.</p></div></div>
+  <div class="metrics">
+   <div class="metric"><small>Policy year</small><strong id="rT">—</strong></div>
+   <div class="metric blue"><small>Prospective reserve</small><strong id="rPros">—</strong></div>
+   <div class="metric gold"><small>Retrospective view</small><strong id="rRetro">—</strong></div>
+   <div class="metric red"><small>Gross reserve view</small><strong id="rGross">—</strong></div>
+  </div>
+  <div class="decision">
+  <div class="decision-icon" aria-hidden="true">▣</div>
+  <div class="decision-copy"><div class="tag">Reserve decision</div><strong id="reserveDecision">—</strong><span id="reserveDetail">—</span></div>
+  <div class="signal" id="reserveSignal">—</div>
+  </div>
+  <div class="card"><h3>Interpretation</h3><p id="reserveExplain" class="intro" style="margin:0">—</p></div>
+ </div>
+ <div class="subsection">
+  <div class="subsection-head"><span class="section-number">02</span><div><h3>Reserve Progression</h3><p>A reserve is not static. This view shows how the prospective reserve changes through the policy term.</p></div></div>
+  <div class="chart-card tall"><div id="reserveChart" class="svg-chart"></div></div>
+  <div class="card"><h3>Selected policy years</h3><div id="progressTable"></div></div>
+ </div>
+</div>
+
+<div class="view" id="analysis">
+ <div class="kicker">05 · Product &amp; scenario analysis</div>
+ <h2>Product Comparison &amp; Stress</h2>
+ <p class="intro">Compare benefit structures and then challenge the base case with adverse mortality and interest-rate assumptions.</p>
+ <div class="subsection">
+  <div class="subsection-head"><span class="section-number">01</span><div><h3>Product Comparison</h3><p>Compare term, whole life and endowment structures under the same assumptions.</p></div></div>
+  <div class="chart-card"><div id="comparisonChart" class="svg-chart"></div></div>
+  <div class="card"><div id="comparisonTable"></div></div>
+ </div>
+ <div class="subsection">
+  <div class="subsection-head"><span class="section-number">02</span><div><h3>Sensitivity &amp; Stress</h3><p>Challenge the base case with higher mortality and a lower interest rate.</p></div></div>
+  <div class="metrics">
+   <div class="metric"><small>Base net premium</small><strong id="stBase">—</strong></div>
+   <div class="metric blue"><small>Stressed net premium</small><strong id="stNet">—</strong></div>
+   <div class="metric gold"><small>Premium increase</small><strong id="stInc">—</strong></div>
+   <div class="metric red"><small>Reserve increase</small><strong id="stRes">—</strong></div>
+  </div>
+  <div class="chart-card"><div id="stressChart" class="svg-chart"></div></div>
+  <div class="grid2"><div class="card"><h3>Scenario</h3><div id="scenarioTable"></div></div><div class="card soft"><h3>Actuarial interpretation</h3><p id="stressText" class="intro" style="margin:0">—</p></div></div>
+ </div>
+</div>
+
+<div class="view" id="method">
+ <div class="kicker">06 · Model methodology</div>
+ <h2>Methodology</h2>
+ <p class="intro">The project follows a transparent actuarial valuation chain rather than treating the final premium as a black box.</p>
+ <div class="grid3">
+  <div class="card"><h3>01 · Mortality</h3><p>Makeham mortality produces qx values. The mortality multiplier changes the mortality basis used in the calculations.</p></div>
+  <div class="card"><h3>02 · Life table</h3><p>lx is generated recursively, giving survival and deferred-death probabilities.</p></div>
+  <div class="card"><h3>03 · EPV</h3><p>Future benefits are discounted using the selected effective annual interest rate.</p></div>
+  <div class="card"><h3>04 · Net premium</h3><p>The equivalence principle balances the EPV of benefits and the EPV of premiums.</p></div>
+  <div class="card"><h3>05 · Gross premium</h3><p>Expenses, commissions and profit/risk loading are layered on top of the net premium.</p></div>
+  <div class="card"><h3>06 · Reserve</h3><p>Prospective reserve represents future benefit value less future premium value at the selected duration.</p></div>
+ </div>
+ <div class="note"><b>Decision rules used in this portfolio model:</b> green when loading and stress movement are relatively contained; amber when review is warranted; red when the selected assumptions create a comparatively high pricing/reserve burden. These are illustrative decision rules, not production governance thresholds.</div>
+ <div class="card soft"><h3>Limitations</h3><p class="intro" style="margin:0">Illustrative Makeham mortality basis; no smoker/sex/select distinction, lapse or surrender, underwriting classes, tax, regulatory capital, or full profit test. The model is designed to demonstrate actuarial reasoning and sensitivity, not production pricing.</p></div>
+</div>
+</section>
+<footer class="footer">© 2026 Avantika Vashisht · Life Insurance Pricing &amp; Reserve Engine · Actuarial Portfolio</footer>
+</main>
+
+<script>
+const A=.0002,B=.0000027,C=1.124,MAXAGE=120;
+const $=id=>document.getElementById(id);
+const money=x=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number.isFinite(x)?x:0);
+const pct=x=>(100*x).toFixed(1)+'%';
+const v=(i,k)=>Math.pow(1+i,-k);
+
+function qx(age,mult){
+  return Math.min(1,(1-Math.exp(-(A+B*Math.pow(C,age))))*mult);
+}
+function table(age,mult){
+  const rows=[]; let lx=100000;
+  for(let a=age;a<=MAXAGE;a++){
+    const q=a===MAXAGE?1:qx(a,mult);
+    rows.push({age:a,lx,q,px:1-q,dx:lx*q});
+    lx=Math.max(0,lx*(1-q));
+  }
+  return rows;
+}
+function probs(age,n,mult){
+  n=Math.max(0,Math.floor(n));
+  const lt=table(age,mult),tpx=[1],tqx=[]; let surv=1;
+  for(let k=0;k<n;k++){
+    const row=lt[Math.min(k,lt.length-1)];
+    const dq=surv*row.q;
+    tqx.push(dq); surv*=row.px; tpx.push(surv);
+  }
+  return {tpx,tqx};
+}
+function termEPV(age,n,i,mult){
+  const z=probs(age,n,mult); return z.tqx.reduce((s,q,k)=>s+v(i,k+1)*q,0);
+}
+function pureEPV(age,n,i,mult){return v(i,n)*probs(age,n,mult).tpx[n]}
+function endEPV(age,n,i,mult){return termEPV(age,n,i,mult)+pureEPV(age,n,i,mult)}
+function wholeEPV(age,i,mult){
+  const lt=table(age,mult); let surv=1,total=0;
+  for(let k=0;k<lt.length-1;k++){
+    total+=v(i,k+1)*surv*lt[k].q;
+    surv*=lt[k].px;
+    if(surv<1e-12)break;
+  }
+  return total;
+}
+function annuityTerm(age,n,i,mult){
+  const z=probs(age,n,mult); let a=0;
+  for(let k=0;k<n;k++)a+=v(i,k)*z.tpx[k];
+  return a;
+}
+function annuityWhole(age,i,mult){
+  const lt=table(age,mult); let surv=1,a=0;
+  for(let k=0;k<lt.length-1;k++){a+=v(i,k)*surv;surv*=lt[k].px;if(surv<1e-12)break}
+  return a;
+}
+function benefitEPV(s,p){
+  if(p==='term')return termEPV(s.age,s.term,s.i,s.mult);
+  if(p==='wholelife')return wholeEPV(s.age,s.i,s.mult);
+  return endEPV(s.age,s.term,s.i,s.mult);
+}
+function annuityEPV(s,p){return p==='wholelife'?annuityWhole(s.age,s.i,s.mult):annuityTerm(s.age,s.term,s.i,s.mult)}
+function adjAnnuity(a,m){return m===1?a:a-(m-1)/(2*m)}
+function netAnnual(s,p){
+  const a=adjAnnuity(annuityEPV(s,p),s.m); return benefitEPV(s,p)*s.SA/a;
+}
+function grossAnnual(s,p){
+  const a=adjAnnuity(annuityEPV(s,p),s.m);
+  const epvBen=benefitEPV(s,p)*s.SA;
+  const init=s.initFixed+s.initPct*s.SA;
+  const renewalFixed=s.renewFixed*a;
+  const coef=a-s.comm1-s.commRenew*(a-1)-s.renewPct*(a-1);
+  const base=(epvBen+init+renewalFixed)/Math.max(coef,1e-9);
+  return base/Math.max(1-s.profit,1e-6);
+}
+function reserveNet(s,p,t){
+  t=Math.max(0,Math.min(t,s.term));
+  if(p==='wholelife'){
+    const z=probs(s.age,MAXAGE-s.age,s.mult),surv=z.tpx[t];
+    const xt=s.age+t;
+    const futureB=wholeEPV(xt,s.i,s.mult);
+    const futureA=annuityWhole(xt,s.i,s.mult);
+    const futureP=(netAnnual(s,p)/s.SA)*adjAnnuity(futureA,s.m); return Math.max(0,(futureB-futureP)*s.SA);
+  }
+  if(t>=s.term)return 0;
+  const z=probs(s.age,s.term,s.mult),surv=z.tpx[t],remaining=s.term-t,xt=s.age+t;
+  const futureB=(p==='endowment'?endEPV(xt,remaining,s.i,s.mult):termEPV(xt,remaining,s.i,s.mult));
+  const futureA=annuityTerm(xt,remaining,s.i,s.mult);
+  const pAnnual=netAnnual(s,p);
+  const futurePremiumValue=pAnnual/s.SA*adjAnnuity(futureA,s.m);
+  return Math.max(0,(futureB-futurePremiumValue)*s.SA);
+}
+function reserveRetro(s,p,t){
+  if(t<=0)return 0;
+  const z=probs(s.age,t,s.mult),pastA=adjAnnuity(annuityTerm(s.age,t,s.i,s.mult),s.m);
+  const pastB=termEPV(s.age,t,s.i,s.mult);
+  const P=netAnnual(s,p)/s.SA;
+  const accum=Math.pow(1+s.i,t)/Math.max(z.tpx[t],1e-12);
+  return Math.max(0,(P*pastA-pastB)*accum*s.SA);
+}
+function reserveGross(s,p,t){
+  t=Math.max(0,Math.min(t,s.term)); if(p!=='wholelife'&&t>=s.term)return 0;
+  const z=probs(s.age,s.term,s.mult),surv=z.tpx[t],xt=s.age+t;
+  const grossP=grossAnnual(s,p);
+  let futureB,futureA;
+  if(p==='wholelife'){futureB=wholeEPV(xt,s.i,s.mult)*s.SA;futureA=annuityWhole(xt,s.i,s.mult)}
+  else {const rem=s.term-t;futureB=(p==='endowment'?endEPV(xt,rem,s.i,s.mult):termEPV(xt,rem,s.i,s.mult))*s.SA;futureA=annuityTerm(xt,rem,s.i,s.mult)}
+  const a=adjAnnuity(futureA,s.m);
+  const futureExpenses=s.renewFixed*a+grossP*s.renewPct*a+grossP*s.commRenew*a;
+  return Math.max(0,futureB+futureExpenses-grossP*a);
+}
+function readState(){
+  const s={
+    age:+$('age').value,term:+$('term').value,SA:+$('sa').value,i:+$('interest').value,
+    mult:+$('mort').value,m:+$('freq').value,t:+$('reserveT').value,
+    initFixed:+$('initFixed').value||0,initPct:+$('initPct').value||0,
+    renewFixed:+$('renewFixed').value||0,renewPct:+$('renewPct').value||0,
+    comm1:+$('comm1').value||0,commRenew:+$('commRenew').value||0,profit:+$('profit').value||0
+  };
+  s.t=Math.min(s.t,s.term);
+  return s;
+}
+function text(id,x){const el=$(id);if(el)el.textContent=x}
+function html(id,x){const el=$(id);if(el)el.innerHTML=x}
+function labels(s){
+  text('ageV',s.age);text('termV',s.term);text('saV',money(s.SA));text('intV',pct(s.i));text('mortV',s.mult.toFixed(2));
+  $('reserveT').max=s.term;if(+$('reserveT').value>s.term)$('reserveT').value=s.term;text('tV',$('reserveT').value);
+}
+function tableHTML(headers,rows){return '<table><thead><tr>'+headers.map(h=>`<th>${h}</th>`).join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>`<td>${c}</td>`).join('')+'</tr>').join('')+'</tbody></table>'}
+function chart(id,type,labs,datasets,title){
+  const el=$(id);if(!el)return;
+  const W=Math.max(500,el.clientWidth||700),H=315,L=58,R=18,T=38,B=48,pw=W-L-R,ph=H-T-B;
+  const vals=datasets.flatMap(d=>d.data).map(Number).filter(Number.isFinite);let min=0,max=Math.max(...vals,1);
+  if(type==='line'){const lo=Math.min(...vals);min=lo>0?lo*.9:0;max=max<=min?min+1:max*1.08}else max*=1.12;
+  const X=i=>type==='line'?(labs.length<2?L+pw/2:L+i*pw/(labs.length-1)):L+(i+.5)*pw/labs.length;
+  const Y=n=>T+ph-(n-min)/(max-min)*ph;
+  const fmt=n=>Math.abs(n)>=1e6?(n/1e6).toFixed(1)+'m':Math.abs(n)>=1e3?(n/1e3).toFixed(0)+'k':Math.abs(n)<1?n.toFixed(2):Math.round(n).toLocaleString('en-IN');
+  const cols=['#1F66A5','#16836B','#A87416','#5B7690'];let out=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${title}"><text x="${L}" y="18" font-family="Segoe UI,Arial" font-size="14" font-weight="700" fill="#0B2F52">${title}</text>`;
+  for(let j=0;j<=4;j++){const yy=T+j*ph/4,val=max-(max-min)*j/4;out+=`<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="#E6EDF2"/><text x="${L-8}" y="${yy+3}" text-anchor="end" font-family="Segoe UI,Arial" font-size="9" fill="#74899A">${fmt(val)}</text>`}
+  out+=`<line x1="${L}" y1="${T}" x2="${L}" y2="${T+ph}" stroke="#BFCED9"/><line x1="${L}" y1="${T+ph}" x2="${W-R}" y2="${T+ph}" stroke="#BFCED9"/>`;
+  if(type==='bar')datasets.forEach((ds,di)=>ds.data.forEach((val,i)=>{const group=pw/labs.length,ww=group/datasets.length*.76,bx=L+i*group+(group-ww*datasets.length)/2+di*ww,yy=Y(val);out+=`<rect x="${bx}" y="${yy}" width="${ww}" height="${Math.max(1,T+ph-yy)}" rx="3" fill="${cols[di%cols.length]}"><title>${labs[i]}: ${fmt(val)}</title></rect>`}));
+  else datasets.forEach((ds,di)=>{const pts=ds.data.map((n,i)=>`${X(i)},${Y(n)}`).join(' ');out+=`<polyline points="${pts}" fill="none" stroke="${cols[di%cols.length]}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;ds.data.forEach((n,i)=>out+=`<circle cx="${X(i)}" cy="${Y(n)}" r="3.2" fill="${cols[di%cols.length]}"><title>${labs[i]}: ${fmt(n)}</title></circle>`)});
+  labs.forEach((lab,i)=>{if(labs.length<=12||i%Math.ceil(labs.length/10)===0||i===labs.length-1)out+=`<text x="${X(i)}" y="${H-18}" text-anchor="middle" font-family="Segoe UI,Arial" font-size="9" fill="#74899A">${String(lab)}</text>`});
+  datasets.forEach((ds,i)=>out+=`<rect x="${L+i*135}" y="${H-36}" width="9" height="9" rx="2" fill="${cols[i%cols.length]}"/><text x="${L+i*135+14}" y="${H-28}" font-family="Segoe UI,Arial" font-size="9" fill="#536B7E">${ds.label||'Series '+(i+1)}</text>`);
+  out+='</svg>';el.innerHTML=out;
+}
+function decisionClass(load,stressMove){
+  if(load<=.15&&stressMove<=.25)return ["The policy is within the model's review range",'The gross premium is not much higher than the net premium, and the stressed reserve movement is also limited.','good'];
+  if(load<=.30&&stressMove<=.50)return ['The policy needs a closer review','Either the premium loading or the stressed reserve movement is large enough to examine the assumptions more closely.','watch'];
+  return ['The policy shows a high pricing or reserve impact','The selected assumptions produce a relatively large premium loading or reserve movement in this illustrative model.','high'];
+}
+function update(){
+  try{
+    const s=readState();labels(s);
+    const products=[['term','Term Assurance'],['wholelife','Whole Life Assurance'],['endowment','Endowment Assurance']];
+    const nets=Object.fromEntries(products.map(([p])=>[p,netAnnual(s,p)]));
+    const gross=Object.fromEntries(products.map(([p])=>[p,grossAnnual(s,p)]));
+    const loads=Object.fromEntries(products.map(([p])=>[p,gross[p]/nets[p]-1]));
+    const endRes=reserveNet(s,'endowment',s.t),stressS={...s,mult:s.mult*1.3,i:Math.max(.0001,s.i-.01)};
+    const stressNet=netAnnual(stressS,'endowment'),stressRes=reserveNet(stressS,'endowment',s.t);
+    const stressMove=endRes>0?stressRes/endRes-1:0,dec=decisionClass(loads.endowment,stressMove);
+
+    text('ovNet',money(nets.endowment));text('ovGross',money(gross.endowment));text('ovLoad',pct(loads.endowment));text('ovRes',money(endRes));
+    text('decision',dec[0]);text('decisionDetail',dec[1]);$('decisionSignal').textContent=dec[2]==='good'?'Within range':dec[2]==='watch'?'Review needed':'High impact';$('decisionSignal').className='signal '+dec[2];
+    text('whyDecision',`This panel answers one simple question: how much pressure do the current assumptions put on pricing and reserves? The gross endowment premium is ${pct(loads.endowment)} above the net premium, and the stressed reserve at policy year ${s.t} changes by ${pct(stressMove)}. A larger percentage means the assumptions deserve closer review.`);
+    html('snapshot',`<span class="badge">Age ${s.age}</span><span class="badge">${s.term}-year term</span><span class="badge">SA ${money(s.SA)}</span><span class="badge">${$('freq').selectedOptions[0].text}</span><span class="badge">i = ${pct(s.i)}</span><span class="badge">Mortality × ${s.mult.toFixed(2)}</span>`);
+
+    chart('overviewPremiumChart','bar',products.map(x=>x[1]),[{label:'Net annual premium',data:products.map(x=>nets[x[0]])},{label:'Gross annual premium',data:products.map(x=>gross[x[0]])}],'Annual premium comparison');
+    const years=Array.from({length:s.term+1},(_,i)=>i);chart('overviewReserveChart','line',years,[{label:'Endowment reserve',data:years.map(t=>reserveNet(s,'endowment',t))}],'Endowment reserve progression');
+
+    const lt=table(s.age,s.mult);const mortRows=lt.filter((r,i)=>i===0||i===lt.length-1||i%Math.max(1,Math.floor(lt.length/12))===0).slice(0,14).map(r=>[r.age,r.q.toFixed(5),r.px.toFixed(5),Math.round(r.lx).toLocaleString('en-IN'),Math.round(r.dx).toLocaleString('en-IN')]);
+    html('lifeTable',tableHTML(['Age','qx','px','lx','dx'],mortRows));
+    const ages=Array.from({length:Math.min(s.term,MAXAGE-s.age)+1},(_,i)=>s.age+i);chart('mortChart','line',ages,[{label:'qx',data:ages.map(a=>qx(a,s.mult))}],'Mortality rate qx');chart('survChart','line',ages,[{label:'Survival',data:ages.map(a=>probs(s.age,a-s.age,s.mult).tpx[a-s.age])}],'Survival probability');
+
+    html('epvTable',tableHTML(['Product','EPV / unit SA','EPV at sum assured'],products.map(([p,n])=>[n,benefitEPV(s,p).toFixed(5),money(benefitEPV(s,p)*s.SA)])));
+    chart('epvChart','bar',products.map(x=>x[1]),[{label:'EPV / unit SA',data:products.map(x=>benefitEPV(s,x[0]))}],'Expected present value of benefits');
+
+    text('prTerm',money(nets.term));text('prWhole',money(nets.wholelife));text('prEnd',money(nets.endowment));text('prGross',money(gross.endowment));
+    text('pricingDecision',loads.endowment<=.15?'Pricing margin is contained':loads.endowment<=.30?'Pricing margin needs review':'Pricing margin is relatively high');text('pricingDetail',`Gross premium is ${pct(loads.endowment)} above the endowment net premium under the selected expense and loading assumptions.`);$('pricingSignal').textContent=loads.endowment<=.15?'Contained':loads.endowment<=.30?'Review':'High';$('pricingSignal').className='signal '+(loads.endowment<=.15?'good':loads.endowment<=.30?'watch':'high');
+    chart('premiumChart','bar',products.map(x=>x[1]),[{label:'Net',data:products.map(x=>nets[x[0]])},{label:'Gross',data:products.map(x=>gross[x[0]])}],'Net vs gross annual premiums');
+    html('premiumTable',tableHTML(['Product','Net / year','Net / instalment','Gross / year','Loading'],products.map(([p,n])=>[n,money(nets[p]),money(nets[p]/s.m),money(gross[p]),pct(loads[p])] )));
+
+    const retro=reserveRetro(s,'endowment',s.t),gr=reserveGross(s,'endowment',s.t);text('rT',s.t);text('rPros',money(endRes));text('rRetro',money(retro));text('rGross',money(gr));
+    const diff=Math.abs(endRes-retro),ok=diff<Math.max(1,s.SA*.0001);text('reserveDecision',ok?'Prospective / retrospective check agrees':'Reserve consistency check needs review');text('reserveDetail',`At duration ${s.t}, the prospective net reserve is ${money(endRes)} and the retrospective value is ${money(retro)}; difference = ${money(diff)}.`);$('reserveSignal').textContent=ok?'Consistent':'Check';$('reserveSignal').className='signal '+(ok?'good':'watch');text('reserveExplain',`The reserve represents the value of future benefits less the value of future net premiums at duration ${s.t}. The retrospective calculation provides an independent consistency check on the net premium reserve.`);
+
+    const prog=years.map(t=>reserveNet(s,'endowment',t));chart('reserveChart','line',years,[{label:'Endowment reserve',data:prog}],'Net premium reserve by policy year');const step=Math.max(1,Math.floor(years.length/12));html('progressTable',tableHTML(['Policy year','Reserve','% of SA'],years.filter((_,i)=>i%step===0||i===years.length-1).map((t,i)=>[t,money(prog[t]),pct(prog[t]/s.SA)])));
+
+    html('comparisonTable',tableHTML(['Product','Net / year','Gross / year','Premium payable for','EPV of benefit'],products.map(([p,n])=>[n,money(nets[p]),money(gross[p]),p==='wholelife'?'Whole of life':`${s.term} years`,money(benefitEPV(s,p)*s.SA)])));
+    const cmp=products.map(([p,n])=>({label:n,data:years.map(t=>reserveNet(s,p,t))}));chart('comparisonChart','line',years,cmp,'Net reserve progression by product');
+
+    const premiumInc=stressNet/nets.endowment-1,reserveInc=stressMove;text('stBase',money(nets.endowment));text('stNet',money(stressNet));text('stInc',pct(premiumInc));text('stRes',pct(reserveInc));chart('stressChart','bar',['Base','Stressed'],[{label:'Endowment net premium',data:[nets.endowment,stressNet]},{label:'Reserve at t',data:[endRes,stressRes]}],'Base vs stressed valuation');html('scenarioTable',tableHTML(['Assumption','Base','Stressed'],[['Mortality multiplier',s.mult.toFixed(2),(s.mult*1.3).toFixed(2)],['Interest rate',pct(s.i),pct(stressS.i)],['Net premium',money(nets.endowment),money(stressNet)],['Reserve at t',money(endRes),money(stressRes)]]));text('stressText',`The stress case increases mortality by 30% and reduces the interest rate by 1 percentage point. For this policy, the endowment net premium changes by ${pct(premiumInc)} and the reserve at duration ${s.t} changes by ${pct(reserveInc)}. The stress calculation is shown as a scenario analysis rather than a production capital requirement.`);
+  }catch(err){
+    console.error(err);
+    const msg='Model error: '+err.message;
+    ['ovNet','ovGross','ovLoad','ovRes'].forEach(id=>text(id,'—'));if($('decision'))text('decision','Model error');if($('decisionDetail'))text('decisionDetail',msg);
+  }
+}
+
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');const view=$(b.dataset.view);if(view)view.classList.add('active');
+  requestAnimationFrame(update);
+}));
+document.querySelectorAll('input,select').forEach(x=>{x.addEventListener('input',update);x.addEventListener('change',update)});
+window.addEventListener('resize',()=>requestAnimationFrame(update));
+update();
+
+</script>
+</body>
+</html>
