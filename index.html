@@ -29,8 +29,10 @@ h1,h2,h3,h4{font-family:'Fraunces','Georgia',serif;font-weight:600}
 .step{display:flex;gap:12px;align-items:flex-start;padding:12px 10px;border-radius:10px;cursor:pointer;margin-bottom:3px;border:1px solid transparent}
 .step:hover{background:#26251F}
 .step.active{background:#2B2A24;border-color:#3A3931}
-.step .num{flex:0 0 24px;height:24px;border-radius:50%;background:#3A3931;color:var(--side-muted);font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
-.step.active .num{background:var(--rust);color:#fff}
+.nav-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:rgba(255,255,255,.065);color:#CFC6B7;font-size:.82rem;font-weight:800;flex:0 0 28px;line-height:1}
+.step:hover .nav-icon{background:rgba(255,255,255,.11);color:#fff}
+.step.active .nav-icon{background:var(--rust);color:#fff}
+
 .step .txt b{display:block;font-size:.86rem;color:var(--side-ink);font-weight:600}
 .step.active .txt b{color:#fff}
 .step .txt span{font-size:.7rem;color:var(--side-muted);display:block;margin-top:1px}
@@ -43,14 +45,12 @@ h1,h2,h3,h4{font-family:'Fraunces','Georgia',serif;font-weight:600}
 .panel{display:none}.panel.active{display:block;animation:fade .2s ease}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-.eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--rust);margin-bottom:8px}
-.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--rust)}
 h2.pagetitle{font-size:1.7rem;margin:0 0 10px;color:var(--ink);letter-spacing:-.01em}
 .section-sub{color:var(--ink-soft);font-size:.95rem;margin:0 0 26px;max-width:760px;line-height:1.65}
 
 .grid{display:grid;gap:18px}.cols2{grid-template-columns:1fr 1fr}.cols3{grid-template-columns:repeat(3,1fr)}.cols4{grid-template-columns:repeat(4,1fr)}
 @media(max-width:980px){.cols3,.cols4{grid-template-columns:1fr 1fr}}
-@media(max-width:720px){.shell{flex-direction:column}.sidebar{width:100%;flex:none;height:auto;position:relative;padding:18px 0}.content{padding:26px 18px 70px}.cols2,.cols3,.cols4{grid-template-columns:1fr}}
+@media(max-width:720px){.shell{flex-direction:column}.sidebar{width:100%;flex:none;height:auto;position:relative;padding:18px 0}.nav-icon{display:none}.content{padding:26px 18px 70px}.cols2,.cols3,.cols4{grid-template-columns:1fr}}
 
 .card{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:24px 26px;box-shadow:var(--shadow)}
 .card h3{margin:0 0 14px;font-size:1rem;color:var(--ink);font-weight:700;font-family:'Fraunces',serif}
@@ -140,10 +140,10 @@ details[open] summary{margin-bottom:10px}
     <p>Compare Quota Share, Excess of Loss and Stop Loss on your own numbers, and get a clear recommendation.</p>
   </div>
   <div class="steplist" id="nav">
-    <div class="step active" data-tab="start"><div class="num">1</div><div class="txt"><b>Portfolio Setup</b><span>Your premium, capital &amp; risk profile</span></div></div>
-    <div class="step" data-tab="compare"><div class="num">2</div><div class="txt"><b>Price &amp; Compare Treaties</b><span>See all three side by side</span></div></div>
-    <div class="step" data-tab="stress"><div class="num">3</div><div class="txt"><b>Stress Test</b><span>Does your pick hold up?</span></div></div>
-    <div class="step" data-tab="glossary"><div class="num">4</div><div class="txt"><b>Methodology &amp; Glossary</b><span>How the numbers are built</span></div></div>
+    <div class="step active" data-tab="start"><span class="nav-icon">▦</span><div class="txt"><b>Portfolio Setup</b><span>Your premium, capital &amp; risk profile</span></div></div>
+    <div class="step" data-tab="compare"><span class="nav-icon">⇄</span><div class="txt"><b>Price &amp; Compare Treaties</b><span>See all three side by side</span></div></div>
+    <div class="step" data-tab="stress"><span class="nav-icon">△</span><div class="txt"><b>Stress Test</b><span>Does your pick hold up?</span></div></div>
+    <div class="step" data-tab="glossary"><span class="nav-icon">i</span><div class="txt"><b>Methodology &amp; Glossary</b><span>How the numbers are built</span></div></div>
   </div>
   <div class="sidebar-foot">
     <p><strong>Developed by Avantika Vashisht</strong></p>
@@ -154,7 +154,6 @@ details[open] summary{margin-bottom:10px}
 
 <!-- ============================= PANEL 1: PORTFOLIO SETUP ============================= -->
 <section class="panel active" id="start">
-<div class="eyebrow"><span class="dot"></span>Step 1 of 4</div>
 <h2 class="pagetitle">Portfolio Setup</h2>
 <p class="section-sub">Tell us about your book of business. We'll simulate thousands of possible years of claims from these numbers, then price and compare each treaty against them.</p>
 
@@ -246,7 +245,6 @@ details[open] summary{margin-bottom:10px}
 
 <!-- ============================= PANEL 2: PRICE & COMPARE TREATIES ============================= -->
 <section class="panel" id="compare">
-<div class="eyebrow"><span class="dot"></span>Step 2 of 4</div>
 <h2 class="pagetitle">Price &amp; Compare Treaties</h2>
 <p class="section-sub">Each treaty below is priced and tested on its own, using the exact same simulated years, so the comparison is fair. Adjust the strength of any treaty to see cost and protection trade off live.</p>
 
@@ -276,7 +274,6 @@ details[open] summary{margin-bottom:10px}
 
 <!-- ============================= PANEL 3: STRESS TEST ============================= -->
 <section class="panel" id="stress">
-<div class="eyebrow"><span class="dot"></span>Step 3 of 4</div>
 <h2 class="pagetitle">Stress Test</h2>
 <p class="section-sub">A good choice on paper should still hold up in a genuinely bad year. Pick a scenario to see what would actually happen to your capital, with and without your chosen treaty. The treaty terms stay fixed; only the loss environment changes.</p>
 
@@ -305,7 +302,6 @@ details[open] summary{margin-bottom:10px}
 
 <!-- ============================= PANEL 4: METHODOLOGY & GLOSSARY ============================= -->
 <section class="panel" id="glossary">
-<div class="eyebrow"><span class="dot"></span>Step 4 of 4</div>
 <h2 class="pagetitle">Methodology &amp; Glossary</h2>
 <p class="section-sub">Plain-language definitions of everything used in this tool, and how the numbers are actually built.</p>
 <div class="grid cols2">
